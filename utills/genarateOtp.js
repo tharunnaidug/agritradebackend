@@ -4,8 +4,8 @@ let mailTransporter = nodemailer.createTransport(
     {
         service: 'gmail',
         auth: {
-            user: 'agritrade2025@gmail.com',
-            pass: ''
+            user: 'gopalnaidu1972@gmail.com',
+            pass: 'jihkctavxaplbavy'
         }
     }
 );
@@ -20,7 +20,7 @@ export const genarateOtp = (req, res) => {
     console.log(otp);
 
     let mailDetails = {
-        from: 'agritrade2025@gmail.com',
+        from: 'gopalnaidu1972@gmail.com',
         to: email,
         subject: 'AgriTrade OTP For Email Verification',
         text: `Your OTP Is ${otp} `
