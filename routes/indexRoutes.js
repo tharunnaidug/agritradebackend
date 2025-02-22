@@ -1,5 +1,5 @@
 import express from 'express'
-import { allProducts, index, login, logout, product, register } from '../controllers/index.controllers.js'
+import { allProducts, index, login, logout, product, register, sellerlogin, sellerregister } from '../controllers/index.controllers.js'
 import { genarateOtp } from '../utills/genarateOtp.js';
 
 
@@ -12,6 +12,10 @@ router.post('/genarateOtp',genarateOtp);
 router.post('/register', register)
 
 router.post('/login', login)
+
+router.post('/seller/register', sellerregister)
+
+router.post('/seller/login', sellerlogin)
 
 router.get('/logout', logout)
 

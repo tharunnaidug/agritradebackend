@@ -1,5 +1,6 @@
 import cartModel from "../models/cart.model.js";
 import user from "../models/user.model.js";
+import seller from "../models/seller.model.js";
 import genarateJwtToken from "../utills/genarateJwt.js";
 import productModel from "../models/product.model.js";
 
@@ -9,7 +10,7 @@ export const index = async (req, res) => {
 
 export const register = async (req, res) => {
     try {
-        const { username, password, email, phno, name, dob, gender, seller } = req.body;
+        const { username, password, email, phno, name, dob, gender, seller, pic } = req.body;
 
         if (!username || !password || !email || !name || !phno) return res.status(500).json({ error: "All Fields Required" })
 
@@ -25,7 +26,8 @@ export const register = async (req, res) => {
             name: name,
             dob: dob,
             gender: gender,
-            seller: seller
+            seller: seller,
+            pic: pic
         })
         genarateJwtToken(newUser._id, res)
         await newUser.save()
@@ -42,7 +44,7 @@ export const register = async (req, res) => {
             email: newUser.email
         })
     } catch (error) {
-        console.log("problem in Register ", error)
+        console.log("problem in User Register ", error)
         res.status(500).json({ error: "Internal Server Error" });
     }
 }
@@ -70,10 +72,79 @@ export const login = async (req, res) => {
             name: User.name,
             phno: User.phno,
             email: User.email,
-            token: token
+            token: token,
+            pic: User.pic
         })
     } catch (error) {
-        console.log("problem in Login ", error)
+        console.log("problem in User Login ", error)
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+export const sellerregister = async (req, res) => {
+    try {
+        const { username, password, email, phno, companyname, pic } = req.body;
+
+        if (!username || !password || !email || !companyname || !phno) return res.status(500).json({ error: "All Fields Required" })
+
+        if (await seller.findOne({ username })) return res.status(500).json({ error: "Username Already Exist" })
+        if (await seller.findOne({ email })) return res.status(500).json({ error: "Email Already Exist" })
+        if (await seller.findOne({ phno })) return res.status(500).json({ error: "Phone Number Already Exist" })
+
+        const newSeller = new seller({
+            username: username,
+            password: password,
+            email: email,
+            phno: phno,
+            companyname: companyname,
+            pic: pic
+        })
+        genarateJwtToken(newSeller._id, res)
+        await newSeller.save()
+
+        res.status(200).json({
+            message: "success",
+            id: newSeller._id,
+            username: newSeller.username,
+            companyname: newSeller.companyname,
+            phno: newSeller.phno,
+            email: newSeller.email
+        })
+
+    } catch (error) {
+        console.log("problem in Seller Register ", error)
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+
+export const sellerlogin = async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        if (!username || !password) return res.status(500).json({ error: "No Username and Password " })
+
+        const Seller = await seller.findOne({ username })
+
+        if (!Seller) {
+            return res.status(404).json({ error: "No Seller found " })
+        }
+        if (Seller?.password != password) {
+            return res.status(500).json({ error: "Incorrect Password " })
+        }
+        let token = await genarateJwtToken(Seller._id, res)
+
+
+        res.status(200).json({
+            message: "success",
+            id:Seller._id,
+            username: Seller.username,
+            companyname: Seller.companyname,
+            phno: Seller.phno,
+            email: Seller.email,
+            pic:Seller.pic,
+            token: token
+        })
+
+    } catch (error) {
+        console.log("problem in Seller Login ", error)
         res.status(500).json({ error: "Internal Server Error" });
     }
 }
