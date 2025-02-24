@@ -5,6 +5,6 @@ const router=express.Router();
 
 router.get('/users',allUsers);
 
-router.arguments('/orders',allOrders);
+router.get('/orders',allOrders);
 
 export default router;
