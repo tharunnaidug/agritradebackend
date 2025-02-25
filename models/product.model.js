@@ -6,7 +6,7 @@ const productSchema = new mongoose.Schema({
     category: { type: String, required: true },
     price: { type: Number, default: 0 },
     qty: { type: Number, default: 0 },
-    imgSrc: { type: String, required: true },
+    imgSrc: { type: [String], required: true },
     seller:{type:mongoose.Schema.ObjectId, ref: "Seller"},
     createdAt: { type: Date, default: Date.now() }
 }, { timestamps: true });

@@ -4,6 +4,10 @@ import dotenv from 'dotenv'
 import cors from 'cors';
 import cookieParser from "cookie-parser"
 import indexRoutes from './routes/indexRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import auctionRoutes from './routes/auctionRoutes.js';
+import sellerRoutes from './routes/sellerRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 const app = express();
 dotenv.config();
@@ -24,6 +28,10 @@ app.set('view engine', 'html');
 app.use(express.json());
 
 app.use('/', indexRoutes)
+app.use('/user', userRoutes)
+app.use('/admin', adminRoutes)
+app.use('/seller', sellerRoutes)
+app.use('/auction', auctionRoutes)
 
 
 

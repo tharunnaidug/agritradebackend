@@ -66,7 +66,7 @@ export const allOrder = async (req, res) => {
 
 export const order = async (req, res) => {
     try {
-        let orderId = req.user._id;
+        let orderId = req.params.id;
         const od = await orderModel.findOne({ _id: orderId })
         res.status(200).json(od)
     } catch (error) {

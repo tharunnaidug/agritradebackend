@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken'
-import user from '../models/user.model.js';
+import seller from '../models/seller.model.js';
 
-export const verify = async(req,res,next)=>{
+export const verifySeller = async(req,res,next)=>{
     try {
         const token = req.cookies.jwt
 
@@ -14,7 +14,7 @@ export const verify = async(req,res,next)=>{
         if (!decoded) {
             return res.status(400).json({ error: "Invaild Token" })
         }
-        const User = await user.findById(decoded.userId).select("-password")
+        const User = await seller.findById(decoded.userId).select("-password")
 
         if (!User) {
             return res.status(400).json({ error: "User Not found" })
