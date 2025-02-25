@@ -1,34 +1,32 @@
 import express, { Router } from "express"
-import { verify } from "jsonwebtoken";
 import { addQty, address, addToCart, allOrder, cancelorder, cart, checkout, clearCart, order, profile, removeQty, updateAdd } from "../controllers/user.controllers.js";
+import { verifyUser } from "../middlewares/isLoggedIn.js";
 
 const router = express.Router();
 
-router.get('/profile/:username', verify, profile);
+router.get('/profile/:username', verifyUser, profile);
 
-router.get('/address', verify, address)
+router.get('/address', verifyUser, address)
 
-router.get('/order', verify, allOrder)
+router.get('/order',verifyUser , allOrder)
 
-router.get('/order/:id', verify, order)
+router.get('/order/:id', verifyUser, order)
 
-router.get('/order/cancel/:id', verify, cancelorder)
+router.get('/order/cancel/:id', verifyUser, cancelorder)
 
-router.get('/cart', verify, cart)
+router.get('/cart', verifyUser, cart)
 
-router.get('/cart/clear', verify, clearCart)
+router.get('/cart/clear', verifyUser, clearCart)
 
 // Post routes
-router.post('/checkout', verify, checkout)
+router.post('/checkout', verifyUser, checkout)
 
-router.post('/address/update', verify, updateAdd)
+router.post('/address/update', verifyUser, updateAdd)
 
-router.post('/cart/add', verify, addToCart)
+router.post('/cart/add', verifyUser, addToCart)
 
-router.post('cart/update', verify,)
+router.post('/cart/addQty', verifyUser, addQty)
 
-router.post('/cart/addQty', verify, addQty)
-
-router.post('/cart/removeQty', verify, removeQty)
+router.post('/cart/removeQty', verifyUser, removeQty)
 
 export default router;
