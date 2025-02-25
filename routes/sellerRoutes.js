@@ -1,6 +1,6 @@
 import express, { Router } from "express"
-import { AllSellerorders, profile, sellerAddProduct, sellerorder, sellerUpdateProduct, sproduct, sproducts, updateSellerorder } from "../controllers/seller.controllers";
-import { verifySeller } from "../middlewares/isSeller";
+import { AllSellerorders, profile, sellerAddProduct, sellerorder, sellerUpdateProduct, sproduct, sproducts, updateSellerorder } from "../controllers/seller.controllers.js";
+import { verifySeller } from "../middlewares/isSeller.js";
 
 const router = express.Router();
 
