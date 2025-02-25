@@ -1,5 +1,5 @@
 import express, { Router } from "express"
-import { allAuction, allOrders, allProducts, allUsers, users } from "../controllers/admin.controllers";
+import { allAuction, allOrders, allProducts, allUsers, users } from "../controllers/admin.controllers.js";
 
 const router=express.Router();
 
