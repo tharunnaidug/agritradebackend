@@ -1,4 +1,4 @@
-import auctionModel from '../models/auction.model';
+import auctionModel from '../models/auction.model.js';
 
 export const allMyListedAuctions = async (req, res) => {
     let userId = req.user._id;
