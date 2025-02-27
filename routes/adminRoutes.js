@@ -7,8 +7,8 @@ router.get('/users',allUsers);
 
 router.get('/orders',allOrders);
 
-router.get("/auctions",allAuction)
+router.get('/auctions',allAuction)
 
-router.get("/products",allProducts)
+router.get('/products',allProducts)
 
 export default router;
