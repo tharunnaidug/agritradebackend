@@ -29,6 +29,9 @@ export const allOrders = async (req, res) => {
 export const allAuction = async (req, res) => {
 
 }
+export const allSellers = async (req, res) => {
+
+}
 export const allProducts = async (req, res) => {
 
     try {
@@ -40,4 +43,20 @@ export const allProducts = async (req, res) => {
         console.log("Problem in All Products Admin ", error)
         res.status(500).json({ error: "Internal Server Error" })
     }
+}
+
+export const updateAuction = async (req, res) => {
+
+}
+export const updateProduct = async (req, res) => {
+
+}
+export const updateUser = async (req, res) => {
+
+}
+export const updateSeller = async (req, res) => {
+
+}
+export const updateOrder = async (req, res) => {
+
 }

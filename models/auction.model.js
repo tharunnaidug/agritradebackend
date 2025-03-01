@@ -7,6 +7,9 @@ const auctionSchema = mongoose.Schema({
     product: {
         type: String
     },
+    imgSrc: {
+        type: [String]
+    },
     description: {
         type: String
     },
@@ -20,6 +23,10 @@ const auctionSchema = mongoose.Schema({
             default: []
         }
     ],
+    status: {
+        type: String,
+        default: "Not Approved"
+    },
     auctionDateTime: { type: Date }
 }, { timestamps: true })
 
