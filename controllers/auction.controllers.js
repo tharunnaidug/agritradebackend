@@ -1,5 +1,5 @@
 import auctionModel from '../models/auction.model.js';
-import seller from '../models/seller.model.js';
+import sellerModel from '../models/seller.model.js';
 
 export const allMyListedAuctions = async (req, res) => {
     let userId = req.user._id;
@@ -32,6 +32,18 @@ export const viewAuction = async (req, res) => {
     } catch (error) {
         console.log("problem in Getting A Auction ", error)
         res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+export const upcomingAuctions = async (req, res) => {
+    try {
+
+        const upcomingAuctions = await Auction.find({
+            auctionDateTime: { $gt: new Date() }
+        });
+        return res.status(200).json({ message: "success", upcomingAuctions })
+    } catch (error) {
+        console.log("problem in Getting Upcoing Auctions ", error)
+        res.status(500).json({ error: "Internal Server Error" })
     }
 }
 export const addAuction = async (req, res) => {
