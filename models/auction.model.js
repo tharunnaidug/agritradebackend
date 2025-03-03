@@ -27,7 +27,18 @@ const auctionSchema = mongoose.Schema({
         type: String,
         default: "Not Approved"
     },
-    auctionDateTime: { type: Date }
+    auctionDateTime: {
+        type: Date
+    },
+    interestedUsers: [
+        {
+            type: mongoose.Schema.Types.ObjectId, ref: "User", default: []
+
+        }
+    ],
+    highestBid: {
+        type: Number
+    }
 }, { timestamps: true })
 
 const Auction = mongoose.model("Auction", auctionSchema)
