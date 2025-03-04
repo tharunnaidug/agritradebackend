@@ -138,6 +138,11 @@ export const placeBid = async (req, res) => {
             return res.status(404).json({ error: "Auction not found" });
         }
 
+        const currentHighestBid = auction.highestBid || auction.baseBid;
+        if (bidAmount <= currentHighestBid) {
+            return res.status(400).json({ error: "Bid must be higher than the current highest bid" });
+        }
+
         const newBid = new bidModel({
             auctionId,
             bidder: userId,
@@ -147,13 +152,16 @@ export const placeBid = async (req, res) => {
         await newBid.save();
 
         auction.bids.push(newBid._id);
+        auction.highestBid = bidAmount;
+        auction.highestBidder = userId;
         await auction.save();
 
         const io = req.app.get("io");
         io.to(auctionId).emit("newBid", {
             auctionId,
             bidAmount,
-            bidder: user.username
+            bidder: user.username,
+            highestBid: bidAmount
         });
 
         res.status(200).json({ message: "success", bid: newBid });
