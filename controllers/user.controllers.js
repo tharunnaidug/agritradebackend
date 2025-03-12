@@ -21,7 +21,10 @@ export const profile = async (req, res) => {
             phno: User.phno,
             email: User.email,
             address: address,
-            orders: orders
+            orders: orders,
+            pic:User.pic,
+            gender:User.gender,
+            dob:User.dob
         })
 
 

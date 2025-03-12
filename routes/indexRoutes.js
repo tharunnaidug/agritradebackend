@@ -1,13 +1,16 @@
 import express from 'express'
 import { allProducts, index, login, logout, product, register, sellerlogin, sellerregister } from '../controllers/index.controllers.js'
 import { genarateOtp } from '../utills/genarateOtp.js';
+import { checkEmailExists, checkSellerEmailExists } from '../middlewares/emailCheck.js';
 
 
 const router = express.Router();
 
 router.get('/', index)
 
-router.post('/genarateOtp',genarateOtp);
+router.post('/seller/genarateOtp',checkSellerEmailExists,genarateOtp);
+
+router.post('/user/genarateOtp',checkEmailExists,genarateOtp);
 
 router.post('/register', register)
 

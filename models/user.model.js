@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
     name: { type: String },
     phno: { type: Number, unique: true },
     gender: { type: String, default: "male" },
-    pic: { type: String, default: " " },
+    pic: { type: String, default: "https://i.ibb.co/B5dhy2XB/free-user-icon-3296-thumb.png" },
     seller: { type: Boolean, default: false },
     dob: Date,
 }, { timestamps: true })
