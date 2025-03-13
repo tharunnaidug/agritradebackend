@@ -24,7 +24,7 @@ mongoose.connect(process.env.DBURL)
 
 app.use(express.urlencoded({ extended: 'false' }))
 app.use(cors({
-  "origin": "*",
+  "origin": "https://agritrade-three.vercel.app",
   credentials: true
 }))
 app.use(cookieParser())
