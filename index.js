@@ -24,7 +24,7 @@ mongoose.connect(process.env.DBURL)
 
 app.use(express.urlencoded({ extended: 'false' }))
 app.use(cors({
-  "origin": "http://localhost:5173",
+  "origin": "*",
   credentials: true
 }))
 app.use(cookieParser())

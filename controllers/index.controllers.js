@@ -11,7 +11,7 @@ export const index = async (req, res) => {
 
 export const register = async (req, res) => {
     try {
-        const { username, password, email, phno, name, dob, gender, seller, pic } = req.body;
+        const { username, password, email, phno, name, dob, gender, seller, profilePic } = req.body;
 
         if (!username || !password || !email || !name || !phno) return res.status(500).json({ error: "All Fields Required" })
 
@@ -31,7 +31,7 @@ export const register = async (req, res) => {
             dob: dob,
             gender: gender,
             seller: seller,
-            pic: pic
+            pic: profilePic
         })
         genarateJwtToken(newUser._id, res)
         await newUser.save()
