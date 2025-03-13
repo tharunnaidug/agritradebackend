@@ -29,18 +29,13 @@ mongoose.connect(process.env.DBURL)
   app.use(cors({
     origin: "https://agritrade-three.vercel.app",
     credentials: true,
-    methods: "GET,POST,OPTIONS",
-    allowedHeaders: "Content-Type,Authorization",
-  }));
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
   
-  app.options('*', cors({
-    origin: "https://agritrade-three.vercel.app",
-    credentials: true,
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
-    allowedHeaders: "Content-Type,Authorization",
-  }));
   
-app.set('view engine', 'html');
+// app.set('view engine', 'html');
 
 const server = createServer(app);
 const io = initializeWebSocket(server);
