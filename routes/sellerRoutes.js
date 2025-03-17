@@ -1,5 +1,5 @@
 import express, { Router } from "express"
-import { AllSellerorders, profile, sellerAddProduct, sellerorder, sellerUpdateProduct, sproduct, sproducts, updateSellerorder } from "../controllers/seller.controllers.js";
+import { AllSellerorders, profile, sellerAddProduct, sellerDeleteProduct, sellerorder, sellerUpdateProduct, sproduct, sproducts, updateSellerorder } from "../controllers/seller.controllers.js";
 import { verifySeller } from "../middlewares/isSeller.js";
 
 const router = express.Router();
@@ -13,6 +13,8 @@ router.get('/product/:id', verifySeller, sproduct)
 router.get('/orders', verifySeller, AllSellerorders)
 
 router.get('/order/:id', verifySeller, sellerorder)
+
+router.get("/deleteproduct/:id", verifySeller, sellerDeleteProduct)
 
 //post
 router.post("/updateorder/:id", verifySeller, updateSellerorder)

@@ -102,8 +102,8 @@ export const sellerUpdateProduct = async (req, res) => {
     try {
         let sellerId = req.user?._id;
         let proid = req.params.id;
-        const { title, description, category, price, qty, imgScr } = req.body;
-        if (!sellerId || !proid || title || description || category || price || qty || imgScr) {
+        const { title, description, category, price, qty, imgSrc } = req.body;
+        if (!sellerId || !proid || !title || !description || !category || !price || !qty || !imgSrc) {
             return res.status(404).json({ error: "Required Parameters Doesnot Match" })
         }
         const pro = await productModel.findById(proid)
@@ -115,7 +115,7 @@ export const sellerUpdateProduct = async (req, res) => {
         pro.category = category;
         pro.price = price;
         pro.qty = qty;
-        pro.imgSrc = imgScr;
+        pro.imgSrc = imgSrc;
 
         await pro.save();
         return res.status(200).json({ message: "Product updated successfully", product: pro });
@@ -124,12 +124,29 @@ export const sellerUpdateProduct = async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" })
     }
 }
+export const sellerDeleteProduct = async (req, res) => {
+    try {
+        let proid = req.params.id;
+
+        const pro = await productModel.findById(proid)
+        if (!pro) {
+            return res.status(404).json({ error: "Product Not Found" })
+        }
+        pro.status = 'deleted';
+        await pro.save();
+        return res.status(200).json({ message: 'Product marked as deleted' });
+
+    } catch (error) {
+        console.log("problem in delete Product By Seller ", error)
+        res.status(500).json({ error: "Internal Server Error" })
+    }
+}
 export const sellerAddProduct = async (req, res) => {
     try {
 
         let sellerId = req.user?._id;
-        const { title, description, category, price, qty, imgScr } = req.body;
-        if (!sellerId || title || description || category || price || qty || imgScr) {
+        const { title, description, category, price, qty, imgSrc } = req.body;
+        if (!sellerId || !title || !description || !category || !price || !qty || !imgSrc) {
             return res.status(404).json({ error: "Required Parameters Doesnot Match" })
         }
         const product = new productModel({
@@ -139,7 +156,7 @@ export const sellerAddProduct = async (req, res) => {
             category: category,
             price: price,
             qty: qty,
-            imgScr: imgScr,
+            imgSrc: imgSrc,
             seller: sellerId
         })
         await product.save();
