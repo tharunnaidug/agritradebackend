@@ -10,8 +10,21 @@ export const profile = async (req, res) => {
         const Seller = await seller.findOne({ username })
         if (!Seller) return res.status(404).json({ error: "No Seller found" })
 
-        const products = await productModel.findOne({ sellerId: Seller._id })
-        const orders = await orderModel.find({ sellerId: Seller._id })
+            const activeProductsCount = await productModel.countDocuments({ seller: Seller._id, status: "active" });
+            const orderStatusCounts = await orderModel.aggregate([
+                { $match: { sellerId: Seller._id } },
+                { $group: { _id: "$status", count: { $sum: 1 } } }
+            ]);
+    
+            const ordersCount = {
+                shipped: 0,
+                delivered: 0,
+                pending: 0,
+                confirmed: 0
+            };
+            orderStatusCounts.forEach(order => {
+                ordersCount[order._id] = order.count;
+            });
 
         res.status(200).json({
             id: Seller._id,
@@ -19,8 +32,8 @@ export const profile = async (req, res) => {
             companyname: Seller.companyname,
             phno: Seller.phno,
             email: Seller.email,
-            products: products,
-            orders: orders
+            activeProductsCount,
+            ordersCount
         })
 
 
