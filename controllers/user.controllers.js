@@ -231,9 +231,8 @@ export const addToCart = async (req, res) => {
 export const addQty = async (req, res) => {
     try {
         let userId = req.user._id;
-        const { productId, qty } = req.body;
+        const { productId } = req.body;
 
-        // console.log(productId, qty)
         const cart = await cartModel.findOne({ userId: userId });
         const product = await productModel.findById(productId);
 
@@ -264,7 +263,6 @@ export const removeQty = async (req, res) => {
         let userId = req.user._id;
         const { productId, qty } = req.body;
 
-        // console.log(productId, qty)
         const cart = await cartModel.findOne({ userId: userId });
 
         let itemIndex = cart.items.findIndex(item => item.productId.toString() === productId);

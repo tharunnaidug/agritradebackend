@@ -165,7 +165,7 @@ export const logout = (req, res) => {
 
 export const allProducts = async (req, res) => {
     try {
-        const allPro = await productModel.find()
+        const allPro = await productModel.find().populate("seller", "companyname");
         res.status(200).json({ message: "success", product: allPro })
     } catch (error) {
         console.log("problem in All products ", error)
@@ -175,7 +175,7 @@ export const allProducts = async (req, res) => {
 export const product = async (req, res) => {
     try {
         let proid = req.params.id;
-        const pro = await productModel.findById(proid)
+        const pro = await productModel.findById(proid).populate("seller", "companyname");
         res.status(200).json({ message: "success", product: pro })
     } catch (error) {
         console.log("problem in get products ", error)
