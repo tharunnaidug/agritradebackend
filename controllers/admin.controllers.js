@@ -196,3 +196,37 @@ export const updateOrder = async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" })
     }
 }
+export const adminDashboard = async (req, res) => {
+    try {
+        const totalUsers = await userModel.countDocuments();
+        const totalSellers = await sellerModel.countDocuments();
+        const totalProducts = await productModel.countDocuments();
+        const totalAuctions = await auctionModel.countDocuments();
+        const pendingAuctions = await auctionModel.countDocuments({ status: "Not Approved" });
+
+        const totalOrders = await orderModel.countDocuments();
+        const deliveredOrders = await orderModel.countDocuments({ status: "Delivered" });
+        const shippedOrders = await orderModel.countDocuments({ status: "Shipped" });
+        const confirmedOrders = await orderModel.countDocuments({ status: "Confirmed" });
+        const pendingOrders = await orderModel.countDocuments({ status: "Placed" });
+
+        res.status(200).json({
+            message: "success",
+            dashboard: {
+                totalUsers,
+                totalSellers,
+                totalProducts,
+                totalAuctions,
+                pendingAuctions,
+                totalOrders,
+                deliveredOrders,
+                shippedOrders,
+                confirmedOrders,
+                pendingOrders
+            }
+        });
+    } catch (error) {
+        console.log("Problem in Admin Dashboard ", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+};

@@ -1,7 +1,9 @@
 import express, { Router } from "express"
-import { allAuction, allOrders, allProducts, allSellers, allUsers, newAuction, updateAuction, updateOrder, updateProduct, updateSeller, updateUser } from "../controllers/admin.controllers.js";
+import { adminDashboard, allAuction, allOrders, allProducts, allSellers, allUsers, newAuction, updateAuction, updateOrder, updateProduct, updateSeller, updateUser } from "../controllers/admin.controllers.js";
 
 const router=express.Router();
+
+router.get('/dashboard',adminDashboard)
 
 router.get('/users',allUsers)
 
