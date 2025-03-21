@@ -50,7 +50,7 @@ export const updateAdd = async (req, res) => {
         const { fullname, addressLine1, addressLine2, city, state, country, pincode, phno } = req.body;
         let userId = req.user._id;
         const add = await addressModel.updateOne({ userId: userId }, { $set: { fullname: fullname, addressLine1: addressLine1, addressLine2: addressLine2, city: city, state: state, country: country, pincode: pincode, phno: Number(phno) } }, { upsert: true })
-        res.status(200).json({ message: "success", address: add })
+        res.status(200).json({ message: "success" })
     } catch (error) {
         console.log("problem in Updating address ", error)
         res.status(500).json({ error: "Internal Server Error" })
@@ -283,3 +283,42 @@ export const removeQty = async (req, res) => {
 
     }
 }
+export const placeOrder = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const cart = await cartModel.findOne({ userId });
+        if (!cart || cart.items.length === 0) {
+            return res.status(400).json({ message: "Cart is empty" });
+        }
+
+        const address = await addressModel.findOne({ userId });
+        if (!address) {
+            return res.status(400).json({ message: "No address found. Please add an address." });
+        }
+
+        const total = cart.items.reduce((sum, item) => sum + item.price * item.qty, 0);
+
+        const newOrder = new orderModel({
+            userId,
+            items: cart.items,
+            address: address._id,
+            payment: "COD",
+            total,
+            status: "Placed"
+        });
+
+        await newOrder.save();
+
+        for (const item of cart.items) {
+            await productModel.findByIdAndUpdate(item.productId, { $inc: { qty: -item.qty } });
+        }
+
+        cartModel.findOneAndUpdate({ userId }, { $set: { items: [] } });
+
+        res.status(200).json({ message: "Order placed successfully", order: newOrder });
+    } catch (error) {
+        console.error("Error placing order:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
