@@ -207,7 +207,7 @@ export const addToCart = async (req, res) => {
             return res.status(400).json({ error: "Out of Stock" });
         }
 
-        const cart = await cartModel.findOne({ userId: userId })
+        const cart = await cartModel.findOne({ userId: userId });
 
         let itemIndex = cart.items.findIndex(item => item.productId.toString() === productId);
         
@@ -217,17 +217,24 @@ export const addToCart = async (req, res) => {
             }
             cart.items[itemIndex].qty += qty;
         } else {
-            cart.items.push({ productId, title, price, qty, imgSrc: imgScr });
+            cart.items.push({ 
+                productId, 
+                title, 
+                price, 
+                qty, 
+                imgSrc: Array.isArray(imgScr) ? imgScr.join(',') : imgScr 
+            });
         }
 
-        await cart.save()
+        await cart.save();
 
-        res.status(200).json({ message: "success", cart: cart })
+        res.status(200).json({ message: "success", cart: cart });
     } catch (error) {
-        console.log("problem in Add cart ", error)
-        res.status(500).json({ error: "Internal Server Error" })
+        console.log("problem in Add cart ", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
-}
+};
+
 export const addQty = async (req, res) => {
     try {
         let userId = req.user._id;

@@ -7,24 +7,54 @@ export const profile = async (req, res) => {
 
     try {
         let username = req.params.username;
-        const Seller = await seller.findOne({ username })
-        if (!Seller) return res.status(404).json({ error: "No Seller found" })
+        const Seller = await seller.findOne({ username });
+        if (!Seller) {
+            return res.status(404).json({ error: "No Seller found" });
+        }
 
-            const activeProductsCount = await productModel.countDocuments({ seller: Seller._id, status: "active" });
-            const orderStatusCounts = await orderModel.aggregate([
-                { $match: { sellerId: Seller._id } },
-                { $group: { _id: "$status", count: { $sum: 1 } } }
-            ]);
-    
-            const ordersCount = {
-                shipped: 0,
-                delivered: 0,
-                pending: 0,
-                confirmed: 0
-            };
-            orderStatusCounts.forEach(order => {
+        const activeProductsCount = await productModel.countDocuments({ seller: Seller._id, status: "active" });
+        
+        const orderStatusCounts = await orderModel.aggregate([
+            {
+                $lookup: {
+                    from: "products",
+                    localField: "items.productId",
+                    foreignField: "_id",
+                    as: "productDetails"
+                }
+            },
+            {
+                $unwind: "$productDetails"
+            },
+            {
+                $match: { "productDetails.seller": Seller._id }
+            },
+            {
+                $group: {
+                    _id: {
+                        $cond: {
+                            if: { $eq: ["$status", "Placed"] },
+                            then: "pending",
+                            else: "$status"
+                        }
+                    },
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
+        
+        const ordersCount = {
+            shipped: 0,
+            delivered: 0,
+            pending: 0,
+            confirmed: 0
+        };
+
+        orderStatusCounts.forEach(order => {
+            if (ordersCount.hasOwnProperty(order._id)) {
                 ordersCount[order._id] = order.count;
-            });
+            }
+        });
 
         res.status(200).json({
             id: Seller._id,
@@ -34,7 +64,7 @@ export const profile = async (req, res) => {
             email: Seller.email,
             activeProductsCount,
             ordersCount
-        })
+        });
 
 
     } catch (error) {
