@@ -24,9 +24,6 @@ export const profile = async (req, res) => {
                 }
             },
             {
-                $unwind: "$productDetails"
-            },
-            {
                 $match: { "productDetails.seller": Seller._id }
             },
             {
@@ -38,7 +35,13 @@ export const profile = async (req, res) => {
                             else: "$status"
                         }
                     },
-                    count: { $sum: 1 }
+                    orders: { $addToSet: "$_id" }
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    count: { $size: "$orders" } 
                 }
             }
         ]);
@@ -49,12 +52,13 @@ export const profile = async (req, res) => {
             pending: 0,
             confirmed: 0
         };
-
+        
         orderStatusCounts.forEach(order => {
             if (ordersCount.hasOwnProperty(order._id)) {
                 ordersCount[order._id] = order.count;
             }
         });
+        
 
         res.status(200).json({
             id: Seller._id,
@@ -97,7 +101,32 @@ export const sproduct = async (req, res) => {
 export const AllSellerorders = async (req, res) => {
     try {
         let sellerId = req.user?._id;
-        const orders = await orderModel.find({ seller: sellerId })
+        const orders = await orderModel.aggregate([
+            {
+                $lookup: {
+                    from: "products",
+                    localField: "items.productId",
+                    foreignField: "_id",
+                    as: "productDetails"
+                }
+            },
+            {
+                $lookup: {
+                    from: "addresses", 
+                    localField: "address",
+                    foreignField: "_id",
+                    as: "addressDetails"
+                }
+            },
+            {
+                $match: { "productDetails.seller": sellerId }
+            },{
+                $unwind: {
+                    path: "$addressDetails",
+                    preserveNullAndEmptyArrays: true 
+                }
+            }
+        ]);
 
         res.status(200).json({ message: "success", orders: orders })
 
