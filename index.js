@@ -11,6 +11,7 @@ import userRoutes from './routes/userRoutes.js';
 import auctionRoutes from './routes/auctionRoutes.js';
 import sellerRoutes from './routes/sellerRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 
 const app = express();
 dotenv.config();
@@ -47,6 +48,7 @@ app.use('/user', userRoutes)
 app.use('/admin', adminRoutes)
 app.use('/seller', sellerRoutes)
 app.use('/auction', auctionRoutes)
+app.use('/payment', paymentRoutes)
 
 startAuctions()
 notifyInterestedUsers()

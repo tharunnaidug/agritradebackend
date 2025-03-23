@@ -22,9 +22,9 @@ export const profile = async (req, res) => {
             email: User.email,
             address: address,
             orders: orders,
-            pic:User.pic,
-            gender:User.gender,
-            dob:User.dob
+            pic: User.pic,
+            gender: User.gender,
+            dob: User.dob
         })
 
 
@@ -210,19 +210,19 @@ export const addToCart = async (req, res) => {
         const cart = await cartModel.findOne({ userId: userId });
 
         let itemIndex = cart.items.findIndex(item => item.productId.toString() === productId);
-        
+
         if (itemIndex > -1) {
             if (cart.items[itemIndex].qty + qty > product.qty) {
                 return res.status(400).json({ error: "Exceeds available stock" });
             }
             cart.items[itemIndex].qty += qty;
         } else {
-            cart.items.push({ 
-                productId, 
-                title, 
-                price, 
-                qty, 
-                imgSrc: Array.isArray(imgScr) ? imgScr.join(',') : imgScr 
+            cart.items.push({
+                productId,
+                title,
+                price,
+                qty,
+                imgSrc: Array.isArray(imgScr) ? imgScr.join(',') : imgScr
             });
         }
 
@@ -293,7 +293,7 @@ export const removeQty = async (req, res) => {
 export const placeOrder = async (req, res) => {
     try {
         const userId = req.user.id;
-
+        const { payment } = req.body;
         const cart = await cartModel.findOne({ userId });
         if (!cart || cart.items.length === 0) {
             return res.status(400).json({ message: "Cart is empty" });
@@ -310,7 +310,7 @@ export const placeOrder = async (req, res) => {
             userId,
             items: cart.items,
             address: address._id,
-            payment: "COD",
+            payment: payment,
             total,
             status: "Placed"
         });
@@ -321,7 +321,9 @@ export const placeOrder = async (req, res) => {
             await productModel.findByIdAndUpdate(item.productId, { $inc: { qty: -item.qty } });
         }
 
-        cartModel.findOneAndUpdate({ userId }, { $set: { items: [] } });
+        // cartModel.findOneAndUpdate({ userId }, { $set: { items: [] } });
+        cart.items = [];
+        await cart.save();
 
         res.status(200).json({ message: "Order placed successfully", order: newOrder });
     } catch (error) {
