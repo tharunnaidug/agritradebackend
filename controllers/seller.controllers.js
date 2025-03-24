@@ -13,6 +13,7 @@ export const profile = async (req, res) => {
         }
 
         const activeProductsCount = await productModel.countDocuments({ seller: Seller._id, status: "active" });
+        const outofstockProductsCount = await productModel.countDocuments({ seller: Seller._id,  qty: { $lte: 0 } } );
         
         const orderStatusCounts = await orderModel.aggregate([
             {
@@ -24,15 +25,23 @@ export const profile = async (req, res) => {
                 }
             },
             {
+                $unwind: "$productDetails"
+            },
+            {
                 $match: { "productDetails.seller": Seller._id }
             },
             {
                 $group: {
                     _id: {
-                        $cond: {
-                            if: { $eq: ["$status", "Placed"] },
-                            then: "pending",
-                            else: "$status"
+                        $switch: {
+                            branches: [
+                                { case: { $eq: ["$status", "Placed"] }, then: "pending" },
+                                { case: { $eq: ["$status", "Confirmed"] }, then: "confirmed" },
+                                { case: { $eq: ["$status", "Shipped"] }, then: "shipped" },
+                                { case: { $eq: ["$status", "Delivered"] }, then: "delivered" },
+                                { case: { $eq: ["$status", "Cancelled"] }, then: "cancelled" }
+                            ],
+                            default: "$status"
                         }
                     },
                     orders: { $addToSet: "$_id" }
@@ -41,10 +50,11 @@ export const profile = async (req, res) => {
             {
                 $project: {
                     _id: 1,
-                    count: { $size: "$orders" } 
+                    count: { $size: "$orders" } // Count unique orders
                 }
             }
         ]);
+        
         
         const ordersCount = {
             shipped: 0,
@@ -67,7 +77,8 @@ export const profile = async (req, res) => {
             phno: Seller.phno,
             email: Seller.email,
             activeProductsCount,
-            ordersCount
+            ordersCount,
+            outofstockProductsCount
         });
 
 
@@ -138,7 +149,7 @@ export const AllSellerorders = async (req, res) => {
 export const sellerorder = async (req, res) => {
     try {
         let orderId = req.params.id;
-        const od = await orderModel.findOne({ _id: orderId })
+        const od = await orderModel.findOne({ _id: orderId }).populate("address");
         res.status(200).json(od)
     } catch (error) {
         console.log("problem in Order of Seller ", error)
@@ -148,18 +159,14 @@ export const sellerorder = async (req, res) => {
 export const updateSellerorder = async (req, res) => {
     try {
         let orderId = req.params.id;
-        const { items, address, payment, total, status } = req.body;
-        if (!orderId || items || address || payment || total || status) {
+        const { status } = req.body;
+        if (!orderId ||!status) {
             return res.status(404).json({ error: "Required Parameters Doesnot Match" })
         }
         const od = await orderModel.findOne({ _id: orderId })
         if (!od) {
             return res.status(404).json({ error: "Order Not Found" })
         }
-        od.items = items;
-        od.address = address;
-        od.payment = payment;
-        od.total = total;
         od.status = status;
 
         await od.save();
@@ -170,6 +177,31 @@ export const updateSellerorder = async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" })
     }
 }
+// export const updateSellerorder = async (req, res) => {
+//     try {
+//         let orderId = req.params.id;
+//         const { items, address, payment, total, status } = req.body;
+//         if (!orderId || items || address || payment || total || status) {
+//             return res.status(404).json({ error: "Required Parameters Doesnot Match" })
+//         }
+//         const od = await orderModel.findOne({ _id: orderId })
+//         if (!od) {
+//             return res.status(404).json({ error: "Order Not Found" })
+//         }
+//         od.items = items;
+//         od.address = address;
+//         od.payment = payment;
+//         od.total = total;
+//         od.status = status;
+
+//         await od.save();
+
+//         return res.status(200).json({ message: "Order updated successfully", order: od });
+//     } catch (error) {
+//         console.log("problem in Order Update By Seller ", error)
+//         res.status(500).json({ error: "Internal Server Error" })
+//     }
+// }
 export const sellerUpdateProduct = async (req, res) => {
     try {
         let sellerId = req.user?._id;
