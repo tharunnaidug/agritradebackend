@@ -1,5 +1,5 @@
 import express, { Router } from "express"
-import { addQty, address, addToCart, allOrder, cancelorder, cart, checkout, clearCart, order, placeOrder, profile, removeQty, updateAdd } from "../controllers/user.controllers.js";
+import { addQty, address, addToCart, allOrder, cancelorder, cart, checkout, clearCart, order, placeOrder, profile, removeQty, updateAdd, updateUser } from "../controllers/user.controllers.js";
 import { verifyUser } from "../middlewares/isLoggedIn.js";
 
 const router = express.Router();
@@ -22,6 +22,8 @@ router.put('/order/cancel/:id', verifyUser, cancelorder)
 router.post('/checkout', verifyUser, checkout)
 
 router.post('/address/update', verifyUser, updateAdd)
+
+router.post('/profile/update', verifyUser, updateUser)
 
 router.post('/cart/add', verifyUser, addToCart)
 

@@ -51,7 +51,7 @@ export const updateAdd = async (req, res) => {
         const { fullname, addressLine1, addressLine2, city, state, country, pincode, phno } = req.body;
         let userId = req.user._id;
         const add = await addressModel.updateOne({ userId: userId }, { $set: { fullname: fullname, addressLine1: addressLine1, addressLine2: addressLine2, city: city, state: state, country: country, pincode: pincode, phno: Number(phno) } }, { upsert: true })
-        res.status(200).json({ message: "success" })
+        res.status(200).json({ message: "success!" })
     } catch (error) {
         console.log("problem in Updating address ", error)
         res.status(500).json({ error: "Internal Server Error" })
@@ -163,8 +163,6 @@ export const cancelorder = async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" });
     }
 };
-
-
 
 export const cart = async (req, res) => {
     try {
@@ -348,3 +346,27 @@ export const placeOrder = async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 };
+export const updateUser = async (req, res) => {
+    let userId = req.user._id;
+    const { email, name, phno, gender, pic } = req.body;
+    if (!pic || !email || !name || !phno || !gender )
+        return res.status(404).json({ error: "Incompelete Information" })
+    try {
+        const us = await user.findById(userId)
+        if (!us)
+            return res.status(404).json({ error: "User Not FOund" })
+
+        us.email = email;
+        us.name =name;
+        us.phno = Number(phno);
+        us.gender = gender;
+        us.pic=pic;
+
+        await us.save();
+
+        res.status(200).json({ message: "success.", us })
+    } catch (error) {
+        console.log("Problem in Update User Info ", error)
+        res.status(500).json({ error: "Internal Server Error" })
+    }
+}
