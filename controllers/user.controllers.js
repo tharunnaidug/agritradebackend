@@ -3,6 +3,7 @@ import orderModel from "../models/order.model.js";
 import addressModel from "../models/address.model.js";
 import productModel from "../models/product.model.js";
 import cartModel from "../models/cart.model.js"
+import sellerModel from "../models/seller.model.js"
 
 export const profile = async (req, res) => {
 
@@ -12,7 +13,7 @@ export const profile = async (req, res) => {
         if (!User) return res.status(404).json({ error: "No user found" })
 
         const address = await addressModel.findOne({ userId: User._id })
-        const orders = await orderModel.find({ userId: User._id })
+        const orders = await orderModel.find({ userId: User._id }).populate("address")
 
         res.status(200).json({
             id: User._id,
@@ -71,8 +72,14 @@ export const allOrder = async (req, res) => {
 export const order = async (req, res) => {
     try {
         let orderId = req.params.id;
-        const od = await orderModel.findOne({ _id: orderId })
-        res.status(200).json(od)
+        const od = await orderModel.findOne({ _id: orderId }).populate("address").populate("items.productId", "seller").lean();
+
+        const sellerId = od.items[0]?.productId?.seller;
+
+        const seller = await sellerModel.findById(sellerId).select("companyname").lean();
+        res.status(200).json({
+            ...od, sellerName: seller ? seller.companyname : null,
+        });
     } catch (error) {
         console.log("problem in Order ", error)
         res.status(500).json({ error: "Internal Server Error" })
@@ -125,29 +132,39 @@ export const checkout = async (req, res) => {
 
 export const cancelorder = async (req, res) => {
     let oid = req.params.id;
+    console.log(oid)
     try {
         let order = await orderModel.findById(oid);
-        if (!order)
-            return res.status(400).json({ error: "No order Found" });
-        for (let item in order.items) {
+        if (!order) return res.status(400).json({ error: "No order Found" });
+        for (let item of order.items) { 
             let product = await productModel.findById(item.productId);
-            if (!product) {
-                return res.status(404).json({ error: `Product ${item.productId} not found` });
-            }
+             console.log(1)
+             if (!product) {
+                 return res.status(404).json({ error: `Product ${item.productId} not found` });
+                }
+                console.log(2)
+                
+                let quantityToAdd = parseInt(item.qty);
+                console.log(3)
+                if (isNaN(quantityToAdd) || quantityToAdd <= 0) {
+                    return res.status(400).json({ error: `Invalid quantity for product ${item.productId}` });
+                }
+                console.log(4)
 
-            product.qty += item.quantity;
-            await productModel.save();
+            product.qty += quantityToAdd;
+            await product.save();
         }
-
+        order.status = "Cancelled";
         await order.save();
 
-        res.status(200).json({ message: "success" })
-
+        return res.status(200).json({ message: "Order cancelled successfully" });
     } catch (error) {
-        console.log("Problem in Order Cancel : ", error);
+        console.log("Problem in Order Cancel: ", error);
         res.status(500).json({ error: "Internal Server Error" });
     }
-}
+};
+
+
 
 export const cart = async (req, res) => {
     try {

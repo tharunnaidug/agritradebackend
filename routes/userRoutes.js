@@ -12,12 +12,12 @@ router.get('/order',verifyUser , allOrder)
 
 router.get('/order/:id', verifyUser, order)
 
-router.get('/order/cancel/:id', verifyUser, cancelorder)
 
 router.get('/cart', verifyUser, cart)
 
 router.get('/cart/clear', verifyUser, clearCart)
 
+router.put('/order/cancel/:id', verifyUser, cancelorder)
 // Post routes
 router.post('/checkout', verifyUser, checkout)
 

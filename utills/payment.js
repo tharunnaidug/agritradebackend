@@ -1,8 +1,11 @@
 import Razorpay from 'razorpay'
 import Payment from "../models/payment.model.js";
 
-
-var instance = new Razorpay({ key_id: process.env.KEYID, key_secret: process.env.SECRET })
+try {
+    var instance = new Razorpay({ key_id: process.env.KEYID, key_secret: process.env.SECRET })
+} catch (error) {
+    
+}
 
 export const checkout = async (req, res) => {
     try {
