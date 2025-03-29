@@ -18,15 +18,25 @@ export const allUsers = async (req, res) => {
 
 export const allOrders = async (req, res) => {
     try {
-        const orders = await orderModel.find()
+        const orders = await orderModel.find() .populate("address") .populate("items.productId", "seller") .lean();
 
-        res.status(200).json({ message: "success", orders: orders })
+        const updatedOrders = await Promise.all(orders.map(async (order) => {
+            const sellerId = order.items?.[0]?.productId?.seller;
+            const seller = sellerId ? await sellerModel.findById(sellerId).select("companyname").lean() : null;
+            
+            return {
+                ...order,
+                sellerName: seller ? seller.companyname : null
+            };
+        }));
 
+        res.status(200).json(updatedOrders);
     } catch (error) {
-        console.log("Problem in All Orders Admin ", error)
-        res.status(500).json({ error: "Internal Server Error" })
+        console.log("Problem in All Orders Admin ", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
-}
+};
+
 
 export const allAuction = async (req, res) => {
     try {
@@ -184,9 +194,9 @@ export const updateOrder = async (req, res) => {
         if (!order) {
             return res.status(404).json({ error: "Order not found" });
         }
-
+        if(payment) order.payment = payment;
+      
         order.status = status;
-        order.payment = payment;
 
         await order.save();
 
@@ -209,6 +219,7 @@ export const adminDashboard = async (req, res) => {
         const shippedOrders = await orderModel.countDocuments({ status: "Shipped" });
         const confirmedOrders = await orderModel.countDocuments({ status: "Confirmed" });
         const pendingOrders = await orderModel.countDocuments({ status: "Placed" });
+        const cancalledOrders = await orderModel.countDocuments({ status: "Cancelled" });
 
         res.status(200).json({
             message: "success",
@@ -222,7 +233,8 @@ export const adminDashboard = async (req, res) => {
                 deliveredOrders,
                 shippedOrders,
                 confirmedOrders,
-                pendingOrders
+                pendingOrders,
+                cancalledOrders
             }
         });
     } catch (error) {
