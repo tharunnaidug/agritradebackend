@@ -63,8 +63,8 @@ export const allSellers = async (req, res) => {
 export const allProducts = async (req, res) => {
 
     try {
-        const products = await productModel.find()
-
+        const products = await productModel.find().populate({ path: "seller",select: "-password"  });
+        
         res.status(200).json({ message: "success", products: products })
 
     } catch (error) {
