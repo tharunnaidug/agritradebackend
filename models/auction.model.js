@@ -41,7 +41,8 @@ const auctionSchema = mongoose.Schema({
     },
     highestBidder: {
         type: mongoose.Schema.Types.ObjectId, ref: "User"
-    }
+    },
+    comment: { type: String }
 }, { timestamps: true })
 
 const Auction = mongoose.model("Auction", auctionSchema)

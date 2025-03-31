@@ -30,12 +30,12 @@ export const allMyListedAuctions = async (req, res) => {
     if (!userId)
         return res.status(401).json({ error: "No UserId Found" })
     try {
-        const pastAuctions = await Auction.find({
+        const pastAuctions = await auctionModel.find({
             auctionDateTime: { $lt: new Date() },
             seller: userId
         });
 
-        const upcomingAuctions = await Auction.find({
+        const upcomingAuctions = await auctionModel.find({
             auctionDateTime: { $gt: new Date() },
             seller: userId
         });
@@ -76,19 +76,20 @@ export const addAuction = async (req, res) => {
 
     if (!user)
         return res.status(401).json({ error: "No UserId Found" })
-    const { product, imgSrc, description, baseBid, auctionDateTime } = req.body;
-    if (product || imgSrc || description || baseBid || auctionDateTime) {
+    const { product, images, description, baseBidPrice, auctionDateTime ,additionalInfo} = req.body;
+    if (!product || !images || !description ||! baseBidPrice ||! auctionDateTime) {
         return res.status(404).json({ error: "Incomplete Information" })
     }
     try {
         const newAuc = new auctionModel({
             seller: userId,
             product: product,
-            imgSrc: imgSrc,
+            imgSrc: images,
             description: description,
-            baseBid: baseBid,
+            baseBid: baseBidPrice,
             status: "Not Approved",
-            auctionDateTime: auctionDateTime
+            auctionDateTime: auctionDateTime,
+            comment:additionalInfo
         })
         await newAuc.save();
 
