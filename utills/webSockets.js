@@ -18,6 +18,11 @@ export const initializeWebSocket = (server) => {
             socket.join(auctionId);
             console.log(`User joined auction room: ${auctionId}`);
         });
+        
+        socket.on("leaveAuction", (auctionId) => {
+            socket.leave(auctionId);
+            console.log(`User left auction room: ${auctionId}`);
+        });
 
         socket.on("disconnect", () => {
             console.log("Client disconnected:", socket.id);

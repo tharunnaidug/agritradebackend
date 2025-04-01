@@ -10,7 +10,7 @@ router.get('/allMyAuctions',verifyUser,allMyAuctions)
 
 router.get('/auction/:id',viewAuctionInfo)
 
-router.get('/auction/view/:id',verifyUser,viewAuction)
+router.get('/auction/view/:id',viewAuction)
 
 router.get('/upcomingAuctions',verifyUser,upcomingAuctions)
 

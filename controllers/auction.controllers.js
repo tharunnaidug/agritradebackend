@@ -1,6 +1,7 @@
 import auctionModel from '../models/auction.model.js';
 import sellerModel from '../models/seller.model.js';
 import userModel from '../models/user.model.js';
+import bidModel from '../models/bid.model.js';
 
 export const allMyAuctions = async (req, res) => {
     let userId = req.user._id;
@@ -64,7 +65,17 @@ export const allMyListedAuctions = async (req, res) => {
 export const viewAuction = async (req, res) => {
     try {
         let aucId = req.params.id;
-        const auction = await auctionModel.findById(aucId).populate("seller", "name").populate("bids");
+        const auction = await auctionModel
+  .findById(aucId)
+  .populate("seller", "name")
+  .populate({
+    path: "bids",
+    populate: {
+      path: "bidder", 
+      select: "name",
+    },
+  })
+  .populate("highestBidder", "name");
         if (!auction) return res.status(404).json({ message: "Auction not found" });
         return res.status(200).json({ message: "success", auction })
     } catch (error) {
@@ -161,16 +172,19 @@ export const placeBid = async (req, res) => {
         return res.status(400).json({ error: "Auction ID and bid amount are required" });
     }
 
-    const user = await userModel.findById(userId)
-    if (!user) return res.status(400).json({ error: "user not found" });
+    const user = await userModel.findById(userId);
+    if (!user) return res.status(400).json({ error: "User not found" });
 
     try {
-        const auction = await auctionModel.findById(auctionId);
+        const auction = await auctionModel.findById(auctionId)
+
         if (!auction) {
             return res.status(404).json({ error: "Auction not found" });
         }
 
-        const currentHighestBid = auction.highestBid || auction.baseBid;
+        const currentHighestBid = auction.highestBid || (auction.baseBid - 0.01);
+        // console.log(currentHighestBid);
+
         if (bidAmount <= currentHighestBid) {
             return res.status(400).json({ error: "Bid must be higher than the current highest bid" });
         }
@@ -178,6 +192,7 @@ export const placeBid = async (req, res) => {
         const newBid = new bidModel({
             auctionId,
             bidder: userId,
+            bidderName: user.name,
             bid: bidAmount
         });
 
@@ -192,7 +207,7 @@ export const placeBid = async (req, res) => {
         io.to(auctionId).emit("newBid", {
             auctionId,
             bidAmount,
-            bidder: user.username,
+            bidder: user.name,
             highestBid: bidAmount
         });
 
@@ -201,7 +216,8 @@ export const placeBid = async (req, res) => {
         console.log("Problem in placing bid:", error);
         res.status(500).json({ error: "Internal Server Error" });
     }
-}
+};
+
 export const liveAuctions = async (req, res) => {
     try {
 
@@ -246,16 +262,16 @@ export const updateAuction = async (req, res) => {
         if (!auction) {
             return res.status(404).json({ error: "Auction not found" });
         }
-        
-            auction.product= product,
-            auction.description=description,
-            auction.baseBid=baseBid,
-            auction.status=status,
-            auction.auctionDateTime=auctionDateTime,
-            auction.comment=additionalInfo,
-            auction.state=state,
-            auction.payment=payment
-        
+
+        auction.product = product,
+            auction.description = description,
+            auction.baseBid = baseBid,
+            auction.status = status,
+            auction.auctionDateTime = auctionDateTime,
+            auction.comment = additionalInfo,
+            auction.state = state,
+            auction.payment = payment
+
         await auction.save();
 
         return res.status(200).json({ message: "success", auction })

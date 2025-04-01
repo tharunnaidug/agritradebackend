@@ -8,13 +8,13 @@ const startAuctions = async () => {
         const now = new Date();
         const auctionsToStart = await auctionModel.find({
             auctionDateTime: { $lte: now },
-            status: "Upcoming"
+            status: "Scheduled"
         });
 
         const io = getIO();
 
         for (const auction of auctionsToStart) {
-            auction.status = "Ongoing";
+            auction.status = "Live";
             await auction.save();
 
             io.to(auction._id.toString()).emit("auctionStarted", {
