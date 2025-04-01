@@ -23,7 +23,7 @@ export const allMyAuctions = async (req, res) => {
         const liveAuctions = await auctionModel.find({
             status: "Live",
             $or: [
-                { bids: { $in: [userId] } }, 
+                { bids: { $in: [userId] } },
                 { interestedUsers: { $in: [userId] } }
             ]
         });
@@ -51,11 +51,11 @@ export const allMyListedAuctions = async (req, res) => {
             seller: userId
         });
         const liveAuctions = await auctionModel.find({
-            status:"Live",
+            status: "Live",
             seller: userId
         });
 
-        return res.status(200).json({ message: "success", pastAuctions, upcomingAuctions ,liveAuctions})
+        return res.status(200).json({ message: "success", pastAuctions, upcomingAuctions, liveAuctions })
     } catch (error) {
         console.log("problem in Getting All listed Auctions ", error)
         res.status(500).json({ error: "Internal Server Error" })
@@ -103,7 +103,7 @@ export const addAuction = async (req, res) => {
 
     if (!user)
         return res.status(401).json({ error: "No UserId Found" })
-    const { product, images, description, baseBidPrice, auctionDateTime, additionalInfo ,state,paymentMode,quantity,unit} = req.body;
+    const { product, images, description, baseBidPrice, auctionDateTime, additionalInfo, state, paymentMode, quantity, unit } = req.body;
     if (!product || !images || !description || !baseBidPrice || !auctionDateTime) {
         return res.status(404).json({ error: "Incomplete Information" })
     }
@@ -117,10 +117,10 @@ export const addAuction = async (req, res) => {
             status: "Not Approved",
             auctionDateTime: auctionDateTime,
             comment: additionalInfo,
-            state:state,
-            payment:paymentMode,
-            qty:quantity,
-            unit:unit
+            state: state,
+            payment: paymentMode,
+            qty: quantity,
+            unit: unit
         })
         await newAuc.save();
 
@@ -212,5 +212,56 @@ export const liveAuctions = async (req, res) => {
     } catch (error) {
         console.log("problem in Getting Live Auctions ", error)
         res.status(500).json({ error: "Internal Server Error" })
+    }
+}
+export const allAuctions = async (req, res) => {
+
+    try {
+        const pastAuctions = await auctionModel.find({
+            auctionDateTime: { $lt: new Date() }
+        });
+
+        const upcomingAuctions = await auctionModel.find({
+            auctionDateTime: { $gt: new Date() }
+        });
+
+        const liveAuctions = await auctionModel.find({
+            status: "Live"
+        });
+
+        return res.status(200).json({ message: "success", pastAuctions, upcomingAuctions, liveAuctions });
+    } catch (error) {
+        console.log("Problem in getting all auctions for admin", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+};
+export const updateAuction = async (req, res) => {
+    const { auctionId, product, description, baseBid, auctionDateTime, additionalInfo, state, payment, status } = req.body;
+    if (!auctionId || !product || !description || !baseBid || !auctionDateTime || !status) {
+        return res.status(404).json({ error: "Incomplete Information" })
+    }
+
+    try {
+        const auction = await auctionModel.findById(auctionId);
+        if (!auction) {
+            return res.status(404).json({ error: "Auction not found" });
+        }
+        
+            auction.product= product,
+            auction.description=description,
+            auction.baseBid=baseBid,
+            auction.status=status,
+            auction.auctionDateTime=auctionDateTime,
+            auction.comment=additionalInfo,
+            auction.state=state,
+            auction.payment=payment
+        
+        await auction.save();
+
+        return res.status(200).json({ message: "success", auction })
+
+    } catch (error) {
+        console.log("problem in Updating Auction by Admin ", error)
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
