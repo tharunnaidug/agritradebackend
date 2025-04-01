@@ -5,25 +5,36 @@ import userModel from '../models/user.model.js';
 export const allMyAuctions = async (req, res) => {
     let userId = req.user._id;
 
-    if (!userId)
-        return res.status(401).json({ error: "No UserId Found" })
+    if (!userId) {
+        return res.status(401).json({ error: "No UserId Found" });
+    }
+
     try {
-        const pastAuctions = await Auction.find({
+        const pastAuctions = await auctionModel.find({
             auctionDateTime: { $lt: new Date() },
             bids: { $in: [userId] }
         });
 
-        const upcomingAuctions = await Auction.find({
+        const upcomingAuctions = await auctionModel.find({
             auctionDateTime: { $gt: new Date() },
-            bids: { $in: [userId] }
+            interestedUsers: { $in: [userId] }
         });
 
-        return res.status(200).json({ message: "success", pastAuctions, upcomingAuctions })
+        const liveAuctions = await auctionModel.find({
+            status: "Live",
+            $or: [
+                { bids: { $in: [userId] } }, 
+                { interestedUsers: { $in: [userId] } }
+            ]
+        });
+
+        return res.status(200).json({ message: "success", pastAuctions, upcomingAuctions, liveAuctions });
     } catch (error) {
-        console.log("problem in Getting All listed Auctions ", error)
-        res.status(500).json({ error: "Internal Server Error" })
+        console.log("Problem in getting all listed auctions", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
-}
+};
+
 export const allMyListedAuctions = async (req, res) => {
     let userId = req.user._id;
 
@@ -39,8 +50,12 @@ export const allMyListedAuctions = async (req, res) => {
             auctionDateTime: { $gt: new Date() },
             seller: userId
         });
+        const liveAuctions = await auctionModel.find({
+            status:"Live",
+            seller: userId
+        });
 
-        return res.status(200).json({ message: "success", pastAuctions, upcomingAuctions })
+        return res.status(200).json({ message: "success", pastAuctions, upcomingAuctions ,liveAuctions})
     } catch (error) {
         console.log("problem in Getting All listed Auctions ", error)
         res.status(500).json({ error: "Internal Server Error" })
@@ -185,5 +200,17 @@ export const placeBid = async (req, res) => {
     } catch (error) {
         console.log("Problem in placing bid:", error);
         res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+export const liveAuctions = async (req, res) => {
+    try {
+
+        const liveAuc = await auctionModel.find({
+            status: "Live"
+        });
+        return res.status(200).json({ message: "success", liveAuc })
+    } catch (error) {
+        console.log("problem in Getting Live Auctions ", error)
+        res.status(500).json({ error: "Internal Server Error" })
     }
 }
