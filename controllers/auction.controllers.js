@@ -57,11 +57,23 @@ export const viewAuction = async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" });
     }
 }
+export const viewAuctionInfo = async (req, res) => {
+    try {
+        let aucId = req.params.id;
+        const auction = await auctionModel.findById(aucId).populate("seller", "name")
+        if (!auction) return res.status(404).json({ message: "Auction not found" });
+        return res.status(200).json({ message: "success", auction })
+    } catch (error) {
+        console.log("problem in Getting A Auction Info ", error)
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+}
 export const upcomingAuctions = async (req, res) => {
     try {
 
-        const upcomingAuctions = await Auction.find({
-            auctionDateTime: { $gt: new Date() }
+        const upcomingAuctions = await auctionModel.find({
+            auctionDateTime: { $gt: new Date() },
+            status: "Scheduled"
         });
         return res.status(200).json({ message: "success", upcomingAuctions })
     } catch (error) {
@@ -76,8 +88,8 @@ export const addAuction = async (req, res) => {
 
     if (!user)
         return res.status(401).json({ error: "No UserId Found" })
-    const { product, images, description, baseBidPrice, auctionDateTime ,additionalInfo} = req.body;
-    if (!product || !images || !description ||! baseBidPrice ||! auctionDateTime) {
+    const { product, images, description, baseBidPrice, auctionDateTime, additionalInfo ,state,paymentMode,quantity,unit} = req.body;
+    if (!product || !images || !description || !baseBidPrice || !auctionDateTime) {
         return res.status(404).json({ error: "Incomplete Information" })
     }
     try {
@@ -89,7 +101,11 @@ export const addAuction = async (req, res) => {
             baseBid: baseBidPrice,
             status: "Not Approved",
             auctionDateTime: auctionDateTime,
-            comment:additionalInfo
+            comment: additionalInfo,
+            state:state,
+            payment:paymentMode,
+            qty:quantity,
+            unit:unit
         })
         await newAuc.save();
 
@@ -129,10 +145,10 @@ export const placeBid = async (req, res) => {
     if (!auctionId || !bidAmount) {
         return res.status(400).json({ error: "Auction ID and bid amount are required" });
     }
-    
+
     const user = await userModel.findById(userId)
     if (!user) return res.status(400).json({ error: "user not found" });
-    
+
     try {
         const auction = await auctionModel.findById(auctionId);
         if (!auction) {

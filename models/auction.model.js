@@ -42,7 +42,11 @@ const auctionSchema = mongoose.Schema({
     highestBidder: {
         type: mongoose.Schema.Types.ObjectId, ref: "User"
     },
-    comment: { type: String }
+    comment: { type: String },
+    state: { type: String },
+    payment: { type: String },
+    unit: { type: String, default: "Kg" },
+    qty: { type: Number }
 }, { timestamps: true })
 
 const Auction = mongoose.model("Auction", auctionSchema)
