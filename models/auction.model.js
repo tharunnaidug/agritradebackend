@@ -11,6 +11,7 @@ const auctionSchema = mongoose.Schema({
     status: { type: String, default: "Not Approved" },
     auctionDateTime: { type: Date, required: true },
     interestedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }],
+    notifiedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }],
     highestBid: { type: Number, default: 0 },
     highestBidder: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     comment: { type: String },

@@ -12,22 +12,30 @@ export const allMyAuctions = async (req, res) => {
 
     try {
         const pastAuctions = await auctionModel.find({
-            auctionDateTime: { $lt: new Date() },
-            bids: { $in: [userId] }
-        });
+            auctionDateTime: { $lt: new Date() }
+        })
+            .populate({
+                path: "bids",
+                match: { bidder: userId }
+            })
+            .then(auctions => auctions.filter(auction => auction.bids.length > 0)); // Only return auctions where the user has bid
 
         const upcomingAuctions = await auctionModel.find({
             auctionDateTime: { $gt: new Date() },
-            interestedUsers: { $in: [userId] }
+            interestedUsers: userId
         });
 
         const liveAuctions = await auctionModel.find({
-            status: "Live",
-            $or: [
-                { bids: { $in: [userId] } },
-                { interestedUsers: { $in: [userId] } }
-            ]
-        });
+            status: "Live"
+        })
+            .populate({
+                path: "bids",
+                match: { bidder: userId }
+            })
+            .then(auctions => auctions.filter(auction =>
+                auction.bids.length > 0 || auction.interestedUsers.includes(userId)
+            ));
+
 
         return res.status(200).json({ message: "success", pastAuctions, upcomingAuctions, liveAuctions });
     } catch (error) {
@@ -66,16 +74,16 @@ export const viewAuction = async (req, res) => {
     try {
         let aucId = req.params.id;
         const auction = await auctionModel
-  .findById(aucId)
-  .populate("seller", "name")
-  .populate({
-    path: "bids",
-    populate: {
-      path: "bidder", 
-      select: "name",
-    },
-  })
-  .populate("highestBidder", "name");
+            .findById(aucId)
+            .populate("seller", "name")
+            .populate({
+                path: "bids",
+                populate: {
+                    path: "bidder",
+                    select: "name",
+                },
+            })
+            .populate("highestBidder", "name");
         if (!auction) return res.status(404).json({ message: "Auction not found" });
         return res.status(200).json({ message: "success", auction })
     } catch (error) {
@@ -86,7 +94,17 @@ export const viewAuction = async (req, res) => {
 export const viewAuctionInfo = async (req, res) => {
     try {
         let aucId = req.params.id;
-        const auction = await auctionModel.findById(aucId).populate("seller", "name")
+        const auction = await auctionModel
+            .findById(aucId)
+            .populate("seller", "name")
+            .populate({
+                path: "bids",
+                populate: {
+                    path: "bidder",
+                    select: "name",
+                },
+            })
+            .populate("highestBidder", "name");
         if (!auction) return res.status(404).json({ message: "Auction not found" });
         return res.status(200).json({ message: "success", auction })
     } catch (error) {
@@ -183,7 +201,6 @@ export const placeBid = async (req, res) => {
         }
 
         const currentHighestBid = auction.highestBid || (auction.baseBid - 0.01);
-        // console.log(currentHighestBid);
 
         if (bidAmount <= currentHighestBid) {
             return res.status(400).json({ error: "Bid must be higher than the current highest bid" });

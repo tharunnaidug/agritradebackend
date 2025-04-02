@@ -5,7 +5,7 @@ let io;
 export const initializeWebSocket = (server) => {
     io = new Server(server, {
         cors: {
-            origin: "http://localhost:5173",
+            origin: "https://agritrade-three.vercel.app",
             methods: ["GET", "POST"],
             credentials: true
         }
