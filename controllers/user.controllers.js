@@ -4,6 +4,8 @@ import addressModel from "../models/address.model.js";
 import productModel from "../models/product.model.js";
 import cartModel from "../models/cart.model.js"
 import sellerModel from "../models/seller.model.js"
+import { sendMails } from "./sendEmails.js";
+
 
 export const profile = async (req, res) => {
 
@@ -131,25 +133,23 @@ export const checkout = async (req, res) => {
 };
 
 export const cancelorder = async (req, res) => {
+    const userId = req.user.id;
+    const User = await user.findById(userId);
     let oid = req.params.id;
-    console.log(oid)
     try {
         let order = await orderModel.findById(oid);
         if (!order) return res.status(400).json({ error: "No order Found" });
-        for (let item of order.items) { 
+        for (let item of order.items) {
             let product = await productModel.findById(item.productId);
-             console.log(1)
-             if (!product) {
-                 return res.status(404).json({ error: `Product ${item.productId} not found` });
-                }
-                console.log(2)
-                
-                let quantityToAdd = parseInt(item.qty);
-                console.log(3)
-                if (isNaN(quantityToAdd) || quantityToAdd <= 0) {
-                    return res.status(400).json({ error: `Invalid quantity for product ${item.productId}` });
-                }
-                console.log(4)
+            if (!product) {
+                return res.status(404).json({ error: `Product ${item.productId} not found` });
+            }
+
+            let quantityToAdd = parseInt(item.qty);
+
+            if (isNaN(quantityToAdd) || quantityToAdd <= 0) {
+                return res.status(400).json({ error: `Invalid quantity for product ${item.productId}` });
+            }
 
             product.qty += quantityToAdd;
             await product.save();
@@ -157,6 +157,20 @@ export const cancelorder = async (req, res) => {
         order.status = "Cancelled";
         await order.save();
 
+        const emailData = {
+            email: User?.email,
+            subject: `Order Cancellation - Agritrade`,
+            text: `Hello ${User.username},\n\nYour order has been Cancalled successfully! 🎉\n\n
+            
+            Order ID:${oid}\n\n
+            
+            Regards,  
+            Team Agritrade`
+        };
+
+        sendMails({ body: emailData }, {
+            status: () => ({ json: () => { } })
+        });
         return res.status(200).json({ message: "Order cancelled successfully" });
     } catch (error) {
         console.log("Problem in Order Cancel: ", error);
@@ -308,8 +322,10 @@ export const removeQty = async (req, res) => {
 export const placeOrder = async (req, res) => {
     try {
         const userId = req.user.id;
+        const User = await user.findById(userId);
         const { payment } = req.body;
         const cart = await cartModel.findOne({ userId });
+
         if (!cart || cart.items.length === 0) {
             return res.status(400).json({ message: "Cart is empty" });
         }
@@ -336,9 +352,35 @@ export const placeOrder = async (req, res) => {
             await productModel.findByIdAndUpdate(item.productId, { $inc: { qty: -item.qty } });
         }
 
-        // cartModel.findOneAndUpdate({ userId }, { $set: { items: [] } });
         cart.items = [];
         await cart.save();
+
+        const orderDetails = cart.items
+            .map(item => `🔹 ${item.name} - ${item.qty} x ₹${item.price} = ₹${item.qty * item.price}`)
+            .join("\n");
+
+        const emailData = {
+            email: User?.email,
+            subject: `Order Confirmation - Agritrade`,
+            text: `Hello ${User.username},\n\nYour order has been placed successfully! 🎉\n\n
+            📦 Order Details:
+            ${orderDetails}
+            
+            🏠 Shipping Address:
+            ${address.street}, ${address.city}, ${address.state} - ${address.zip}
+            
+            💰 Payment Method: ${payment}
+            💵 Total Amount: ₹${total}
+            
+            📢 We will notify you once your order is shipped!
+            
+            Regards,  
+            Team Agritrade`
+        };
+
+        sendMails({ body: emailData }, {
+            status: () => ({ json: () => { } })
+        });
 
         res.status(200).json({ message: "Order placed successfully", order: newOrder });
     } catch (error) {
@@ -346,10 +388,11 @@ export const placeOrder = async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 };
+
 export const updateUser = async (req, res) => {
     let userId = req.user._id;
     const { email, name, phno, gender, pic } = req.body;
-    if (!pic || !email || !name || !phno || !gender )
+    if (!pic || !email || !name || !phno || !gender)
         return res.status(404).json({ error: "Incompelete Information" })
     try {
         const us = await user.findById(userId)
@@ -357,10 +400,10 @@ export const updateUser = async (req, res) => {
             return res.status(404).json({ error: "User Not FOund" })
 
         us.email = email;
-        us.name =name;
+        us.name = name;
         us.phno = Number(phno);
         us.gender = gender;
-        us.pic=pic;
+        us.pic = pic;
 
         await us.save();
 

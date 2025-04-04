@@ -10,6 +10,8 @@ const userSchema = new mongoose.Schema({
     pic: { type: String, default: "https://i.ibb.co/B5dhy2XB/free-user-icon-3296-thumb.png" },
     seller: { type: Boolean, default: false },
     dob: Date,
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date }
 }, { timestamps: true })
 
 const user = mongoose.model("User", userSchema);

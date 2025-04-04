@@ -18,7 +18,7 @@ export const allMyAuctions = async (req, res) => {
                 path: "bids",
                 match: { bidder: userId }
             })
-            .then(auctions => auctions.filter(auction => auction.bids.length > 0)); // Only return auctions where the user has bid
+            .then(auctions => auctions.filter(auction => auction.bids.length > 0));
 
         const upcomingAuctions = await auctionModel.find({
             auctionDateTime: { $gt: new Date() },
