@@ -2,7 +2,7 @@ import cron from "node-cron";
 import auctionModel from "../models/auction.model.js";
 import userModel from "../models/user.model.js";
 import { getIO } from "./webSockets.js";
-import { sendMails } from "./sendEmails.js";
+import sendMails from "./sendEmails.js";
 
 const startAuctions = async () => {
     try {
@@ -31,15 +31,15 @@ const startAuctions = async () => {
                     auctionId: auc._id,
                     message: `Reminder: Auction for ${auc.product} has started!`
                 });
-                
+
                 const emailData = {
                     email: user.email,
                     subject: `Upcoming Auction: ${auc.product}`,
                     text: `Hello ${user.username},\n\nThis is a reminder that the auction for "${auc.product}" has started !!\n\nJoin the auction now! \n\n Regards,\nTeam Agritrade`
                 };
 
-                sendMails({ body: emailData }, { 
-                    status: () => ({ json: () => {} })
+                sendMails({ body: emailData }, {
+                    status: () => ({ json: () => { } })
                 });
                 console.log(`Notification sent to ${user.username} for auction ${auc._id}`);
             }
@@ -52,7 +52,7 @@ const startAuctions = async () => {
 const notifyInterestedUsers = async () => {
     try {
         const now = new Date();
-        const thirtyMinutesLater = new Date(now.getTime() + 30 * 60000); 
+        const thirtyMinutesLater = new Date(now.getTime() + 30 * 60000);
 
         const upcomingAuctions = await auctionModel.find({
             auctionDateTime: { $gte: now, $lte: thirtyMinutesLater }
@@ -77,15 +77,15 @@ const notifyInterestedUsers = async () => {
                     text: `Hello ${user.username},\n\nThis is a reminder that the auction for "${auction.product}" will start in 30 minutes.\n\nJoin the auction now! \n\n Regards,\nTeam Agritrade`
                 };
 
-                sendMails({ body: emailData }, { 
-                    status: () => ({ json: () => {} })
+                sendMails({ body: emailData }, {
+                    status: () => ({ json: () => { } })
                 });
 
                 console.log(`Notification sent to ${user.username} for auction ${auction._id}`);
 
                 auction.notifiedUsers.push(user._id);
             }
-            await auction.save(); 
+            await auction.save();
         }
     } catch (error) {
         console.error("Error in notifyInterestedUsers cron job:", error);

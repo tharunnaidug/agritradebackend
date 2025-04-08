@@ -9,9 +9,8 @@ let mailTransporter = nodemailer.createTransport(
         }
     }
 );
-
-export const sendMails = (req, res) => {
-    const { email,subject,text } = req.body;
+const sendMails = (req, res) => {
+    const { email, subject, text } = req.body;
 
     let mailDetails = {
         from: 'agritrade2025@gmail.com',
@@ -27,8 +26,9 @@ export const sendMails = (req, res) => {
                 res.status(500).json({ error: "Internal Server Error" })
             } else {
                 res.status(200).json({
-                    message:"success"
+                    message: "success"
                 })
             }
         });
 }
+export default sendMails;

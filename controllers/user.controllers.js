@@ -4,7 +4,7 @@ import addressModel from "../models/address.model.js";
 import productModel from "../models/product.model.js";
 import cartModel from "../models/cart.model.js"
 import sellerModel from "../models/seller.model.js"
-import { sendMails } from "./sendEmails.js";
+import sendMails from "../utills/sendEmails.js";
 
 
 export const profile = async (req, res) => {
