@@ -352,12 +352,13 @@ export const placeOrder = async (req, res) => {
             await productModel.findByIdAndUpdate(item.productId, { $inc: { qty: -item.qty } });
         }
 
-        cart.items = [];
-        await cart.save();
-
         const orderDetails = cart.items
             .map(item => `🔹 ${item.name} - ${item.qty} x ₹${item.price} = ₹${item.qty * item.price}`)
             .join("\n");
+
+        cart.items = [];
+        await cart.save();
+
 
         const emailData = {
             email: User?.email,
@@ -367,7 +368,7 @@ export const placeOrder = async (req, res) => {
             ${orderDetails}
             
             🏠 Shipping Address:
-            ${address.street}, ${address.city}, ${address.state} - ${address.zip}
+            ${address.addressLine1}, ${address.city}, ${address.state} - ${address.pincode}
             
             💰 Payment Method: ${payment}
             💵 Total Amount: ₹${total}
