@@ -197,7 +197,8 @@ export const forgotPassword = async (req, res) => {
         us.resetPasswordToken = resetToken;
         us.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
 
-        const resetLink = `https://agritrade-three.vercel.app/reset-password?token=${resetToken}`;
+        await us.save();
+        const resetLink = `https://agritrade-three.vercel.app/user/resetpassword?token=${resetToken}`;
 
         const emailData = {
             email: us.email,
@@ -217,11 +218,12 @@ export const forgotPassword = async (req, res) => {
 export const resetPassword = async (req, res) => {
     try {
         const { token, newPassword } = req.body;
+
+       
         const us = await userModel.findOne({
             resetPasswordToken: token,
             resetPasswordExpires: { $gt: Date.now() }
         });
-
         if (!us) return res.status(400).json({ message: "Invalid or expired token" });
 
         const salt = await bcrypt.genSalt(10);
@@ -247,8 +249,8 @@ export const sellerForgotPassword = async (req, res) => {
         const resetToken = crypto.randomBytes(32).toString("hex");
         user.resetPasswordToken = resetToken;
         user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
-
-        const resetLink = `https://agritrade-three.vercel.app/reset-password?token=${resetToken}`;
+        await user.save();
+        const resetLink = `https://agritrade-three.vercel.app/seller/resetpassword?token=${resetToken}`;
 
         const emailData = {
             email: user.email,

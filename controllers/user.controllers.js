@@ -353,7 +353,7 @@ export const placeOrder = async (req, res) => {
         }
 
         const orderDetails = cart.items
-            .map(item => `🔹 ${item.name} - ${item.qty} x ₹${item.price} = ₹${item.qty * item.price}`)
+            .map(item => `🔹 ${item.title} - ${item.qty} x ₹${item.price} = ₹${item.qty * item.price}`)
             .join("\n");
 
         cart.items = [];
