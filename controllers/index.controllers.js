@@ -7,6 +7,8 @@ import productModel from "../models/product.model.js";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import sendMails from "../utills/sendEmails.js";
+import reviewModel from "../models/review.model.js";
+import orderModel from '../models/order.model.js';
 
 export const index = async (req, res) => {
     res.send("Welcome to AgriTrade Backend !!!")
@@ -168,23 +170,55 @@ export const logout = (req, res) => {
 
 export const allProducts = async (req, res) => {
     try {
-        const allPro = await productModel.find().populate("seller", "companyname");
-        res.status(200).json({ message: "success", product: allPro })
+        const allPro = await productModel.find().populate("seller", "companyname").lean();
+
+        const productsWithRating = await Promise.all(
+            allPro.map(async (product) => {
+                const reviews = await reviewModel.find({ product: product._id });
+                const total = reviews.reduce((sum, r) => sum + r.rating, 0);
+                const numReviews = reviews.length
+                const avgRating = reviews.length > 0 ? (total / reviews.length).toFixed(1) : null;
+                return { ...product, avgRating, numReviews };
+            })
+        );
+
+        res.status(200).json({ message: "success", product: productsWithRating });
     } catch (error) {
-        console.log("problem in All products ", error)
-        res.status(500).json({ error: "Internal Server Error" })
+        console.log("problem in All products ", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 };
+
 export const product = async (req, res) => {
     try {
-        let proid = req.params.id;
-        const pro = await productModel.findById(proid).populate("seller", "companyname");
-        res.status(200).json({ message: "success", product: pro })
+        const proid = req.params.id;
+
+        const pro = await productModel
+            .findById(proid)
+            .populate("seller", "companyname")
+            .lean();
+
+        if (!pro) {
+            return res.status(404).json({ error: "Product not found" });
+        }
+
+        const reviews = await reviewModel.find({ product: proid }).populate("user", "name").lean();
+
+        const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
+        const avgRating = reviews.length > 0 ? (totalRating / reviews.length).toFixed(1) : null;
+
+
+        res.status(200).json({
+            message: "success",
+            product: pro,
+            reviews,
+            avgRating
+        });
     } catch (error) {
-        console.log("problem in get products ", error)
-        res.status(500).json({ error: "Internal Server Error" })
+        console.log("problem in get products ", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
-}
+};
 
 export const forgotPassword = async (req, res) => {
     try {
@@ -219,7 +253,7 @@ export const resetPassword = async (req, res) => {
     try {
         const { token, newPassword } = req.body;
 
-       
+
         const us = await userModel.findOne({
             resetPasswordToken: token,
             resetPasswordExpires: { $gt: Date.now() }
@@ -288,5 +322,47 @@ export const sellerResetPassword = async (req, res) => {
     } catch (error) {
         console.error("Reset Password Error:", error);
         res.status(500).json({ message: "Server error" });
+    }
+};
+export const getReviewsByProduct = async (req, res) => {
+    const { productId } = req.params;
+
+    const reviews = await reviewModel.find({ product: productId })
+        .populate("user", "name")
+        .sort({ createdAt: -1 });
+
+    res.json(reviews);
+};
+
+export const getBestSellingProducts = async (req, res) => {
+    try {
+        const topSales = await orderModel.aggregate([
+            { $unwind: '$items' },
+            {
+                $group: {
+                    _id: '$items.productId',
+                    totalSold: { $sum: '$items.qty' },
+                },
+            },
+            { $sort: { totalSold: -1 } },
+            { $limit: 8 },
+        ]);
+
+        const productIds = topSales.map((item) => item._id);
+
+        const products = await productModel.find({ _id: { $in: productIds } });
+
+        const enrichedProducts = products.map((product) => {
+            const salesData = topSales.find((item) => item._id.toString() === product._id.toString());
+            return {
+                ...product.toObject(),
+                totalSold: salesData?.totalSold || 0,
+            };
+        });
+
+        res.status(200).json({ products: enrichedProducts });
+    } catch (err) {
+        console.error('Error fetching best-selling products:', err);
+        res.status(500).json({ message: 'Internal server error' });
     }
 };

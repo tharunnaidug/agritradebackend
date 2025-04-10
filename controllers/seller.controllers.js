@@ -1,6 +1,7 @@
 import seller from "../models/seller.model.js";
 import orderModel from "../models/order.model.js";
 import productModel from "../models/product.model.js";
+import reviewModel from "../models/review.model.js";
 
 
 export const profile = async (req, res) => {
@@ -13,8 +14,8 @@ export const profile = async (req, res) => {
         }
 
         const activeProductsCount = await productModel.countDocuments({ seller: Seller._id, status: "active" });
-        const outofstockProductsCount = await productModel.countDocuments({ seller: Seller._id,  qty: { $lte: 0 } } );
-        
+        const outofstockProductsCount = await productModel.countDocuments({ seller: Seller._id, qty: { $lte: 0 } });
+
         const orderStatusCounts = await orderModel.aggregate([
             {
                 $lookup: {
@@ -54,21 +55,21 @@ export const profile = async (req, res) => {
                 }
             }
         ]);
-        
-        
+
+
         const ordersCount = {
             shipped: 0,
             delivered: 0,
             pending: 0,
             confirmed: 0
         };
-        
+
         orderStatusCounts.forEach(order => {
             if (ordersCount.hasOwnProperty(order._id)) {
                 ordersCount[order._id] = order.count;
             }
         });
-        
+
 
         res.status(200).json({
             id: Seller._id,
@@ -90,22 +91,55 @@ export const profile = async (req, res) => {
 
 export const sproducts = async (req, res) => {
     try {
-        let sellerId = req.user?._id;
-        const allPro = await productModel.find({ seller: sellerId })
-        res.status(200).json({ message: "success", product: allPro })
+        const sellerId = req.user?._id;
+        const allPro = await productModel.find({ seller: sellerId });
+
+        const productsWithRating = await Promise.all(
+            allPro.map(async (product) => {
+                const reviews = await reviewModel.find({ product: product._id });
+                const total = reviews.reduce((sum, r) => sum + r.rating, 0);
+                const numReviews = reviews.length;
+                const avgRating = numReviews > 0 ? (total / numReviews).toFixed(1) : null;
+
+                return { ...product.toObject(), avgRating, numReviews };
+            })
+        );
+
+        res.status(200).json({ message: "success", product: productsWithRating });
     } catch (error) {
-        console.log("problem in All products Of Seller ", error)
-        res.status(500).json({ error: "Internal Server Error" })
+        console.error("problem in All products Of Seller", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
-}
+};
+
 export const sproduct = async (req, res) => {
     try {
-        let proid = req.params.id;
-        const pro = await productModel.findById(proid)
-        res.status(200).json({ message: "success", product: pro })
+        const proid = req.params.id;
+
+        const pro = await productModel
+            .findById(proid)
+            .populate("seller", "companyname")
+            .lean();
+
+        if (!pro) {
+            return res.status(404).json({ error: "Product not found" });
+        }
+
+        const reviews = await reviewModel.find({ product: proid }).populate("user", "name").lean();
+
+        const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
+        const avgRating = reviews.length > 0 ? (totalRating / reviews.length).toFixed(1) : null;
+
+
+        res.status(200).json({
+            message: "success",
+            product: pro,
+            reviews,
+            avgRating
+        });
     } catch (error) {
-        console.log("problem in get product of Seller ", error)
-        res.status(500).json({ error: "Internal Server Error" })
+        console.log("problem in getting Seller product ", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
@@ -123,7 +157,7 @@ export const AllSellerorders = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: "addresses", 
+                    from: "addresses",
                     localField: "address",
                     foreignField: "_id",
                     as: "addressDetails"
@@ -131,10 +165,10 @@ export const AllSellerorders = async (req, res) => {
             },
             {
                 $match: { "productDetails.seller": sellerId }
-            },{
+            }, {
                 $unwind: {
                     path: "$addressDetails",
-                    preserveNullAndEmptyArrays: true 
+                    preserveNullAndEmptyArrays: true
                 }
             }
         ]);
@@ -160,7 +194,7 @@ export const updateSellerorder = async (req, res) => {
     try {
         let orderId = req.params.id;
         const { status } = req.body;
-        if (!orderId ||!status) {
+        if (!orderId || !status) {
             return res.status(404).json({ error: "Required Parameters Doesnot Match" })
         }
         const od = await orderModel.findOne({ _id: orderId })

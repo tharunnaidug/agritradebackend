@@ -3,6 +3,7 @@ import productModel from "../models/product.model.js";
 import orderModel from "../models/order.model.js";
 import auctionModel from "../models/auction.model.js";
 import sellerModel from "../models/seller.model.js";
+import reviewModel from "../models/review.model.js";
 
 export const allUsers = async (req, res) => {
     try {
@@ -18,12 +19,12 @@ export const allUsers = async (req, res) => {
 
 export const allOrders = async (req, res) => {
     try {
-        const orders = await orderModel.find() .populate("address") .populate("items.productId", "seller") .lean();
+        const orders = await orderModel.find().populate("address").populate("items.productId", "seller").lean();
 
         const updatedOrders = await Promise.all(orders.map(async (order) => {
             const sellerId = order.items?.[0]?.productId?.seller;
             const seller = sellerId ? await sellerModel.findById(sellerId).select("companyname").lean() : null;
-            
+
             return {
                 ...order,
                 sellerName: seller ? seller.companyname : null
@@ -61,17 +62,29 @@ export const allSellers = async (req, res) => {
     }
 }
 export const allProducts = async (req, res) => {
-
     try {
-        const products = await productModel.find().populate({ path: "seller",select: "-password"  });
-        
-        res.status(200).json({ message: "success", products: products })
+        const products = await productModel.find().populate({
+            path: "seller",
+            select: "-password",
+        });
 
+        const productsWithRating = await Promise.all(
+            products.map(async (product) => {
+                const reviews = await reviewModel.find({ product: product._id });
+                const total = reviews.reduce((sum, r) => sum + r.rating, 0);
+                const numReviews = reviews.length;
+                const avgRating = numReviews > 0 ? (total / numReviews).toFixed(1) : null;
+
+                return { ...product.toObject(), avgRating, numReviews };
+            })
+        );
+
+        res.status(200).json({ message: "success", products: productsWithRating });
     } catch (error) {
-        console.log("Problem in All Products Admin ", error)
-        res.status(500).json({ error: "Internal Server Error" })
+        console.log("Problem in All Products Admin ", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
-}
+};
 export const newAuction = async (req, res) => {
     try {
         const auctions = await auctionModel.find({ status: "Not Approved" })
@@ -194,8 +207,8 @@ export const updateOrder = async (req, res) => {
         if (!order) {
             return res.status(404).json({ error: "Order not found" });
         }
-        if(payment) order.payment = payment;
-      
+        if (payment) order.payment = payment;
+
         order.status = status;
 
         await order.save();

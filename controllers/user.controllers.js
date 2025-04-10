@@ -5,7 +5,7 @@ import productModel from "../models/product.model.js";
 import cartModel from "../models/cart.model.js"
 import sellerModel from "../models/seller.model.js"
 import sendMails from "../utills/sendEmails.js";
-
+import reviewModel from "../models/review.model.js";
 
 export const profile = async (req, res) => {
 
@@ -72,21 +72,53 @@ export const allOrder = async (req, res) => {
 };
 
 export const order = async (req, res) => {
-    try {
-        let orderId = req.params.id;
-        const od = await orderModel.findOne({ _id: orderId }).populate("address").populate("items.productId", "seller").lean();
+  try {
+    const orderId = req.params.id;
+    const userId = req.user._id;
 
-        const sellerId = od.items[0]?.productId?.seller;
+    const od = await orderModel
+      .findOne({ _id: orderId })
+      .populate("address")
+      .populate("items.productId", "seller title imgSrc")
+      .lean();
 
-        const seller = await sellerModel.findById(sellerId).select("companyname").lean();
-        res.status(200).json({
-            ...od, sellerName: seller ? seller.companyname : null,
-        });
-    } catch (error) {
-        console.log("problem in Order ", error)
-        res.status(500).json({ error: "Internal Server Error" })
-    }
+    const sellerId = od.items[0]?.productId?.seller;
+    const seller = await sellerModel.findById(sellerId).select("companyname").lean();
+
+    const productIds = od.items.map((item) => item.productId._id);
+
+    console.log(productIds)
+    console.log(orderId)
+    const userReviews = await reviewModel.find({
+      product: { $in: productIds },
+      user: userId,
+    }).lean();
+    // console.log(userReviews)
+    
+    const reviewMap = {};
+    userReviews.forEach((review) => {
+      reviewMap[review.product.toString()] = review;
+    });
+
+    const itemsWithUserReview = od.items.map((item) => {
+      const pid = item.productId._id.toString();
+      return {
+        ...item,
+        userReview: reviewMap[pid] || null,
+      };
+    });
+
+    res.status(200).json({
+      ...od,
+      sellerName: seller ? seller.companyname : null,
+      items: itemsWithUserReview,
+    });
+  } catch (error) {
+    console.log("problem in Order ", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 };
+
 
 export const checkout = async (req, res) => {
 
@@ -414,3 +446,20 @@ export const updateUser = async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" })
     }
 }
+export const createReview = async (req, res) => {
+    const { rating, comment } = req.body;
+    const { productId } = req.params;
+    const userId = req.user.id;
+  
+    const alreadyReviewed = await reviewModel.findOne({ product: productId, user: userId });
+    if (alreadyReviewed) return res.status(400).json({ message: "You already reviewed this product." });
+  
+    const review = await reviewModel.create({
+      product: productId,
+      user: userId,
+      rating,
+      comment,
+    });
+  
+    res.status(201).json({ message: "Review submitted!", review });
+  };
