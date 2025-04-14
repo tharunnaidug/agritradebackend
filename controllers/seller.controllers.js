@@ -284,6 +284,7 @@ export const sellerAddProduct = async (req, res) => {
 
         let sellerId = req.user?._id;
         const { title, description, category, price, qty, imgSrc } = req.body;
+        console.log(sellerId,title, description, category, price, qty, imgSrc)
         if (!sellerId || !title || !description || !category || !price || !qty || !imgSrc) {
             return res.status(404).json({ error: "Required Parameters Doesnot Match" })
         }

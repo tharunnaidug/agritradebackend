@@ -425,7 +425,7 @@ export const placeOrder = async (req, res) => {
 export const updateUser = async (req, res) => {
     let userId = req.user._id;
     const { email, name, phno, gender, pic } = req.body;
-    if (!pic || !email || !name || !phno || !gender)
+    if (!email || !name || !phno || !gender)
         return res.status(404).json({ error: "Incompelete Information" })
     try {
         const us = await user.findById(userId)
@@ -436,7 +436,7 @@ export const updateUser = async (req, res) => {
         us.name = name;
         us.phno = Number(phno);
         us.gender = gender;
-        us.pic = pic;
+        pic ? us.pic = pic :
 
         await us.save();
 
