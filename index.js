@@ -28,7 +28,10 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use(cors({
-  origin: "https://agritrade-three.vercel.app",
+  origin: [
+    "https://agritrade-three.vercel.app", 
+    "https://www.agritrade.tech"
+  ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
