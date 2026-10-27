@@ -3,13 +3,17 @@ import { Server } from "socket.io";
 let io;
 
 export const initializeWebSocket = (server) => {
-    io = new Server(server, {
-        cors: {
-            origin: "https://agritrade-three.vercel.app",
-            methods: ["GET", "POST"],
-            credentials: true
-        }
-    });
+    const io = require("socket.io")(server, {
+  cors: {
+    origin: [
+      "https://agritrade-three.vercel.app", 
+      "https://www.agritrade.tech"
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true
+  }
+});
+
 
     io.on("connection", (socket) => {
         console.log("New client connected:", socket.id);
